@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from schemas.preferences import UserUpdatePreferences, UserPreferencesResponse
-from models.user import User 
+from models.user import User
 from sqlalchemy.orm import Session
-from database.database import get_db 
+from database.database import get_db
 
 router = APIRouter()
 

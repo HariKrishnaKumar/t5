@@ -14,6 +14,7 @@ def get_users():
 def create_user(name: str, email: str):
     return {"message": f"User {name} created with email {email}"}
 
+# New endpoint to update user preferences
 @router.put("/{user_id}/preferences", response_model=UserPreferencesResponse)
 def update_user_preferences(user_id: int,
                             pref: UserUpdatePreferences,

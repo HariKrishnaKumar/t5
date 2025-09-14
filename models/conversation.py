@@ -23,16 +23,15 @@ class User(Base):
 
 
 class Session(Base):
-    __tablename__ = "sessions"
+    __tablename__ = 'sessions'
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    id = Column(String(100), primary_key=True)  # UUID or timestamp-based
-    user_id = Column(String(100), ForeignKey("users.id"), nullable=True)
-    language = Column(String(10), nullable=False)  # ISO 639-1 code
-    created_at = Column(DateTime, default=func.now())
-
-    # Relationships
     user = relationship("User", back_populates="sessions")
     conversation_entries = relationship("ConversationEntry", back_populates="session")
+
+
 
 
 class QuestionMaster(Base):
@@ -97,23 +96,16 @@ class AnswerTranslation(Base):
 
 
 class ConversationEntry(Base):
-    __tablename__ = "conversation_entries"
+    __tablename__ = 'conversation_entries'
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey('sessions.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
+    message = Column(String(1000))
+    response = Column(String(1000))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(String(100), ForeignKey("sessions.id"), nullable=True)
-    user_id = Column(String(100), ForeignKey("users.id"), nullable=True)
-    question_key = Column(String(100), ForeignKey("question_masters.question_key"), nullable=False)
-    answer_key = Column(String(100), ForeignKey("answer_masters.answer_key"), nullable=True)
-    custom_input = Column(Text, nullable=True)
-    response_text = Column(Text, nullable=True)
-    select_type = Column(String(50), nullable=True)  # Added select_type field
-    created_at = Column(DateTime, default=func.now())
-
-    # Relationships
     session = relationship("Session", back_populates="conversation_entries")
     user = relationship("User", back_populates="conversation_entries")
-    question_master = relationship("QuestionMaster", back_populates="conversation_entries")
-    answer_master = relationship("AnswerMaster", back_populates="conversation_entries")
 
 
 # Pydantic Models for API

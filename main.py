@@ -16,7 +16,7 @@ from datetime import datetime
 import httpx
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from database.database import get_db, Base 
+from database.database import get_db, Base, engine 
 from helpers.merchant_helper import MerchantHelper
 from models.merchant_token import MerchantToken
 from fastapi.middleware.cors import CORSMiddleware

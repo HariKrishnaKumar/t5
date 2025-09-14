@@ -5,21 +5,22 @@ from sqlalchemy.sql import func
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
+from database.database import Base
 
-Base = declarative_base()
+# Base = declarative_base()
 
 # SQLAlchemy Models
-class User(Base):
-    __tablename__ = "users"
+# class User(Base):
+#     __tablename__ = "users"
 
-    id = Column(String(100), primary_key=True)  # mobile number or device ID
-    is_guest = Column(Boolean, default=True)
-    device_info = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=func.now())
+#     id = Column(String(100), primary_key=True)  # mobile number or device ID
+#     is_guest = Column(Boolean, default=True)
+#     device_info = Column(String(255), nullable=True)
+#     created_at = Column(DateTime, default=func.now())
 
-    # Relationships
-    sessions = relationship("Session", back_populates="user")
-    conversation_entries = relationship("ConversationEntry", back_populates="user")
+#     # Relationships
+#     sessions = relationship("Session", back_populates="user")
+#     conversation_entries = relationship("ConversationEntry", back_populates="user")
 
 
 class Session(Base):
@@ -31,9 +32,6 @@ class Session(Base):
     user = relationship("User", back_populates="sessions")
     conversation_entries = relationship("ConversationEntry", back_populates="session")
 
-
-
-
 class QuestionMaster(Base):
     __tablename__ = "question_masters"
 
@@ -41,14 +39,14 @@ class QuestionMaster(Base):
     question_key = Column(String(100), unique=True, nullable=False)
     question_text = Column(Text, nullable=False)
     question_order = Column(Integer, nullable=False)
-    type = Column(String(50), nullable=True)  # 'text', 'choice', 'rating', etc.
+    type = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
 
-    # Relationships
     translations = relationship("QuestionTranslation", back_populates="question_master")
     answers = relationship("AnswerMaster", back_populates="question_master")
+    # This relationship is now correctly defined with the foreign key below
     conversation_entries = relationship("ConversationEntry", back_populates="question_master")
 
 
@@ -61,7 +59,6 @@ class QuestionTranslation(Base):
     translated_text = Column(Text, nullable=False)
     variant = Column(String(50), nullable=True)
 
-    # Relationships
     question_master = relationship("QuestionMaster", back_populates="translations")
 
 
@@ -76,7 +73,6 @@ class AnswerMaster(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
 
-    # Relationships
     question_master = relationship("QuestionMaster", back_populates="answers")
     translations = relationship("AnswerTranslation", back_populates="answer_master")
     conversation_entries = relationship("ConversationEntry", back_populates="answer_master")
@@ -91,7 +87,6 @@ class AnswerTranslation(Base):
     translated_text = Column(Text, nullable=False)
     variant = Column(String(50), nullable=True)
 
-    # Relationships
     answer_master = relationship("AnswerMaster", back_populates="translations")
 
 
@@ -104,8 +99,16 @@ class ConversationEntry(Base):
     response = Column(String(1000))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # --- FIX IS HERE ---
+    # Add ForeignKeys to link this entry to a specific question and answer
+    question_key = Column(String(100), ForeignKey("question_masters.question_key"))
+    answer_key = Column(String(100), ForeignKey("answer_masters.answer_key"))
+
+    # Define the relationships back to the parent tables
     session = relationship("Session", back_populates="conversation_entries")
     user = relationship("User", back_populates="conversation_entries")
+    question_master = relationship("QuestionMaster", back_populates="conversation_entries")
+    answer_master = relationship("AnswerMaster", back_populates="conversation_entries")
 
 
 # Pydantic Models for API

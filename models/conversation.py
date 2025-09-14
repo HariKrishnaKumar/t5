@@ -99,12 +99,11 @@ class ConversationEntry(Base):
     response = Column(String(1000))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # --- FIX IS HERE ---
-    # Add ForeignKeys to link this entry to a specific question and answer
+    # This is the required ForeignKey to link a conversation entry to a question and answer
     question_key = Column(String(100), ForeignKey("question_masters.question_key"))
     answer_key = Column(String(100), ForeignKey("answer_masters.answer_key"))
 
-    # Define the relationships back to the parent tables
+    # Relationships back to the parent tables
     session = relationship("Session", back_populates="conversation_entries")
     user = relationship("User", back_populates="conversation_entries")
     question_master = relationship("QuestionMaster", back_populates="conversation_entries")

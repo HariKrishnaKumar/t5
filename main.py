@@ -75,6 +75,7 @@ app.include_router(cart_router)
 app.include_router(clover_cart_router)
 app.include_router(question_master.router)
 app.include_router(api_router)
+app.include_router(users.router, prefix="/users", tags=["Users"])
 
 
 

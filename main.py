@@ -22,7 +22,8 @@ from models.merchant_token import MerchantToken
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import question_master
 from routers.router import api_router
-
+from routers import users, pizzas, ai, auth, recommendations
+from routers import recommendations, users   
 
 
 from utils.merchant_extractor import (
@@ -76,8 +77,8 @@ app.include_router(clover_cart_router)
 app.include_router(question_master.router)
 app.include_router(api_router)
 app.include_router(users.router, prefix="/users", tags=["Users"])
-
-
+app.include_router(recommendations.router)
+app.include_router(recommendations.router, prefix="/users", tags=["recommendations"])
 
 @app.get("/")
 def read_root():

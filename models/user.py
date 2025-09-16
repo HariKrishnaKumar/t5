@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-# Import the shared Base from your database file
 from database.database import Base
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -21,6 +21,6 @@ class User(Base):
     address = Column(String(200), nullable=True)
     preferences = Column(String(255), nullable=True)
 
-    # These relationships will now resolve correctly
-    sessions = relationship("Session", back_populates="user")
-    conversation_entries = relationship("ConversationEntry", back_populates="user")
+    sessions = relationship("models.conversation.Session", back_populates="user")
+    conversation_entries = relationship("models.conversation.ConversationEntry", back_populates="user")
+    recommendations = relationship("models.recommendations.Recommendation", back_populates="user")

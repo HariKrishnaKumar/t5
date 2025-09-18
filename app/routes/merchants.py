@@ -1,24 +1,27 @@
 # app/routes/merchants.py
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
-from services.clover_api import get_clover_categories, get_clover_items
-from schemas.category import Category, Variation, CloverItem
-from dependencies import get_clover_token # Import the correct dependency
-from pydantic import BaseModel
-from database.database import get_db
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
+from database.database import get_db
 from models.merchant import Merchant as MerchantModel
+from services.clover_api import get_clover_categories, get_clover_items
+from schemas.category import Category, Variation, CloverItem # Assuming schemas/category.py exists
+from dependencies import get_clover_token
 
 router = APIRouter()
-# Add this Pydantic schema for the response
+
+# Schema for the /merchants endpoint
 class MerchantInfo(BaseModel):
-    db_id: int
+    id: int
     clover_merchant_id: str
     name: str
 
     class Config:
-        form_attribute = True
+        from_attributes = True
 
+# Endpoint to list all merchants
 @router.get("/merchants", response_model=List[MerchantInfo])
 def list_all_merchants(db: Session = Depends(get_db)):
     """
@@ -27,47 +30,50 @@ def list_all_merchants(db: Session = Depends(get_db)):
     merchants = db.query(MerchantModel).all()
     return merchants
 
+# Endpoint to get categories and variations from Clover
 @router.get("/merchants/{merchant_id}/categories", response_model=List[Category])
 async def get_merchant_categories_from_clover(
-    merchant_id: str,
-    access_token: str = Depends(get_clover_token) # Use the correct dependency
+    merchant_id: int, # The ID from your local database
+    db: Session = Depends(get_db),
+    access_token: str = Depends(get_clover_token)
 ):
     """
     Retrieves all categories and their variations for a specific merchant
     by fetching data directly from the Clover API.
     """
-    # 1. Fetch all categories and items from Clover using the retrieved token
-    clover_categories_data = await get_clover_categories(merchant_id, access_token)
-    clover_items_data = await get_clover_items(merchant_id, access_token)
+    # --- START OF FIX ---
+    # 1. Fetch the merchant from your database to get the real Clover ID.
+    merchant = db.query(MerchantModel).filter(MerchantModel.id == merchant_id).first()
+    if not merchant:
+        raise HTTPException(status_code=404, detail="Merchant not found in local database.")
+    
+    clover_merchant_id = merchant.clover_merchant_id
+    # --- END OF FIX ---
 
-    # 2. Process the data into the desired response format
-    # Create a dictionary to hold category data for easy lookup
+    # 2. Call the Clover API with the correct Clover Merchant ID.
+    clover_categories_data = await get_clover_categories(clover_merchant_id, access_token)
+    clover_items_data = await get_clover_items(clover_merchant_id, access_token)
+
+    # 3. Process the data (this part remains the same)
     categories_map = {
         cat['id']: Category(id=cat['id'], name=cat['name'], variations=[])
         for cat in clover_categories_data.get('elements', [])
     }
 
-    # Loop through items and assign them (and their variations) to the correct categories
     for item_data in clover_items_data.get('elements', []):
         item = CloverItem(**item_data)
-        
-        # Check if the item is associated with any categories
         if item.categories and item.categories.get('elements'):
             for category_ref in item.categories['elements']:
                 category_id = category_ref['id']
-                
                 if category_id in categories_map:
-                    # If the item has variants, add each as a variation
                     if item.variants:
                         for variant_data in item.variants:
                             variation = Variation(
                                 id=variant_data.id,
                                 name=f"{item.name} ({variant_data.name})",
-                                # Clover API returns price in cents, so convert to dollars
                                 price=variant_data.price / 100.0
                             )
                             categories_map[category_id].variations.append(variation)
-                    # If no variants, the item itself is the variation
                     else:
                         variation = Variation(
                             id=item.id,
@@ -76,6 +82,4 @@ async def get_merchant_categories_from_clover(
                         )
                         categories_map[category_id].variations.append(variation)
 
-    # Return the list of category objects
     return list(categories_map.values())
-

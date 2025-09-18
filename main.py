@@ -25,7 +25,18 @@ from routers.router import api_router
 from routers import users, pizzas, ai, auth, recommendations
 from routers import recommendations, users   
 from app.routes import merchants    
-
+from app.routes import (
+    user,
+    clover_auth,
+    clover_data,
+    clover_cart,
+    cart,
+    userCart,
+    question_master,
+    select_routes,
+    voice_routes,
+    items  # <-- ADD THIS IMPORT
+)
 
 from utils.merchant_extractor import (
     extract_merchant_details,
@@ -81,6 +92,9 @@ app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(recommendations.router)
 app.include_router(recommendations.router, prefix="/users", tags=["recommendations"])
 app.include_router(merchants.router, prefix="/api", tags=["merchants"])
+
+
+
 
 @app.get("/")
 def read_root():

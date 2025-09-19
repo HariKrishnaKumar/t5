@@ -11,7 +11,7 @@ TOKEN_URL = os.getenv("CLOVER_TOKEN_URL")
 AUTH_URL = os.getenv("CLOVER_AUTH_URL")
 
 
-# @router.get("/login")
+@router.get("/login")
 def clover_login():
     """Redirect user to Clover OAuth page"""
     return {
@@ -19,7 +19,7 @@ def clover_login():
     }
 
 
-# @router.get("/callback")
+@router.get("/callback")
 async def clover_callback(request: Request, code: str):
     """OAuth2 callback to exchange code for access + refresh tokens"""
     async with httpx.AsyncClient() as client:
@@ -38,7 +38,7 @@ async def clover_callback(request: Request, code: str):
         return data
 
 
-# @router.post("/token")
+@router.post("/token")
 async def clover_token(code: str):
     """Directly exchange authorization code for tokens (no redirect flow)."""
     async with httpx.AsyncClient() as client:
@@ -56,7 +56,7 @@ async def clover_token(code: str):
         return resp.json()
 
 
-# @router.post("/refresh")
+@router.post("/refresh")
 async def clover_refresh(refresh_token: str):
     """Refresh expired access token"""
     async with httpx.AsyncClient() as client:
